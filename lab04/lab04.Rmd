@@ -1,0 +1,231 @@
+---
+title: "Measurement and Plotting in R"
+author: " "
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, root.dir = "~/Dropbox/Fall2018/TA/lab04/")
+```
+
+
+## Today's Goals
+
+Review:
+
+- interpretation/usefulness of different plots
+
+- plotting syntax in R
+
+- including plots in homework
+
+
+## Reseach Question
+
+Puzzle
+
+- Does sharing a common gender unite or divide opposing partisans who identify as women?
+
+
+Hypotheses:
+
+1. **Opposing partisans who identify as women conceive of their gender identity differently.**
+
+2. Mistrust increases among partisans who identify as women when the salience of gender increases.
+
+
+Source
+
+- Klar, Samara. 2018. “When Common Identities Decrease Trust: An Experimental Study of Partisan Women.” American Journal of Political Science. 62(3): 610-622.
+
+## The Data
+
+\footnotesize
+```{r, echo = TRUE}
+load("commonidentity.Rdata")
+colnames(df)
+```
+
+  - `feminist` variables on 5 point scale: extremely well (1), very well (2), somewhat well (3), not very well (4), not at all (5)
+
+  - To test hypothesis \#1, we'll focus on `feminist_describe_you` and `party_id` 
+
+
+
+## Hypothesis #1
+
+Survey to online panel of 3,607 women aged 18+ April 2017
+
+What does this plot show?
+
+```{r}
+## you'll want to include code in your homework
+tab_all <- table(df$feminist_describe_you)
+barplot(tab_all,
+        main = "Barplot of Identifying with Feminist Label",
+        xlab = "Response",
+        ylab = "Num. of Respondents",
+        names.arg = c("extremely well", "very well", "somewhat well",
+                      "not very well", "not at all", "NA"))
+```
+
+
+## Hypothesis #1
+
+Does visual evidence support or refute hypothesis 1?
+
+
+```{r}
+tab_r <- table(df$feminist_describe_you[df$party_id == "Republican"])
+tab_d <- table(df$feminist_describe_you[df$party_id == "Democrat"])
+tab_both <- rbind(tab_r, tab_d)
+barplot(tab_both,
+        main = "Identifying with Feminist Label for Democrats (Blue) and Republicans (Red)",
+        col = c("red", "blue"),
+        xlab = "Response",
+        ylab = "Num. of Respondents",
+        names.arg = c("extremely well", "very well", "somewhat well",
+                      "not very well", "not at all", "NA"))
+```
+
+
+## Alternative Hypothesis
+
+The confounder of *age* explains both party identification and identifying with the "feminist" label.  Perhaps:
+
+   - younger people more likely to be democrat
+
+   - younger people more likely to identify as feminists
+    
+Let's examine with visuals.
+    
+
+## Visualizing Data: Histogram
+
+- Histogram shows *density*
+- What is density?
+- Why does it sum to 100%?
+
+
+## Visualizing Data: Histogram
+
+What does this plot show?  Interpret first "box."
+
+```{r}
+h <- hist(x = df$age,
+         freq = FALSE,
+         breaks = 10,
+         main = "Histogram of Age of Respondents",
+         xlab = "Age")
+h$density
+areas <- 10 * h$density
+sum(areas)
+```
+
+
+
+## Visualizing Data: Boxplots
+
+What are the components of a boxplot?
+
+What can we now say about our confounder suspicions?
+
+```{r}
+boxplot(df$age[df$party_id == "Republican"], df$age[df$party_id == "Democrat"],
+        main = "Boxplots of Age by Party ID",
+        names = c("Republican", "Democrat"),
+        xlab = "Party ID",
+        ylab = "Age")
+```
+
+
+
+## Visulaizing Data: Correlation
+
+What is correlation?
+
+  - Positive: when `x` increases, `y` increases
+  - Negative: when `x` increases, `y` decreases
+  - Strong vs. Weak
+  - Between -1 and 1
+
+Using different data so we have continuous variables.
+
+  - Ask, does state spending on education correlate with student success?
+
+
+## Visulaizing Data: Correlation
+
+```{r, warning=FALSE, echo = TRUE, message=FALSE}
+#install.packages("car")
+library("car")
+data("States")
+?States ## look at variable descriptions
+cor(x = States$dollars, y = States$SATV)
+cor(x = States$dollars, y = States$SATM)
+```
+  
+  
+  
+## Visulaizing Data: Scatterplot
+
+
+```{r}
+plot(x = States$dollars, y = States$SATV,
+     xlab = "Spending on education in $1000s/student",
+     ylab = "Average Verbal SAT Score",
+     main = "Spending on Education and Student Success across States",
+     cex = 1,
+     col = "purple")
+```
+
+
+
+## Logarithmic Function
+
+Useful to "smooth out" skewed variable:
+
+- keep in mind for income, population, etc.
+
+- functions in R for this
+
+```{r, echo = TRUE}
+log(3)
+log(3, base = exp(1)) ## default base
+log(3, base = 10)
+```
+
+## Logged Spending
+
+
+```{r}
+plot(x = log(States$dollars), y = States$SATV,
+     xlab = "Log of spending on education in $1000s/student",
+     ylab = "Average Verbal SAT Score",
+     main = "Spending on Education and Student Success across States",
+     cex = 1,
+     col = "purple")
+```
+
+## Plotting in R markdown
+
+To make plots look good in homwork pdf use r chunk options (see .Rmd).
+
+```{r, fig.align = "center", fig.width = 3, fig.height = 3.5}
+plot(x = 1, y = 1, xlab = "x", ylab = "y")
+```
+
+
+
+## Msc: Tips for Homework Success
+
+- Lots and lots of plotting options... google questions! 
+- Knit as you go.
+- This homework is longer that's why you have 2 weeks...
+- Remember, homework 3 we will start to deduct points for formatting if it impacts our ability to grade.  Questions?
+
+    1. Write written answers to problems in the text space, not in comments in the R chunks.
+
+    2. Relatedly, make sure lines of code and comments in R chunks do not run off the pdf page.
+
+    3. Make sure that answers from code are displayed in the pdf.  If not working, use echo=T and eval=T in the r chunk options, explicitly.

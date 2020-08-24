@@ -1,0 +1,421 @@
+---
+title: "Uncertainty and Hypothesis Tests"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Review
+
+Why do we care about *uncertainty*?
+
+
+## Review
+
+Why do we care about *uncertainty*?
+
+- to quantify how certain we can be of our empirical findings
+- in other words, to quantify how likely is it that our result was just by chance
+
+This is why we need probability theory.
+
+## Review
+
+In your own words, what's the main insight from each of these probability concepts?  Why are they important to political science research?
+
+
+- LLN
+- CLT
+
+
+## Review
+
+In your own words, what's the main insight from each of these probability concepts? Why are they important to political science research?
+
+- LLN
+    - as sample size increases, sample mean converges to population mean
+- CLT
+    - as sample size increases, sampling distribution of sample means is approximately normal 
+    
+    
+    
+
+    
+## Today
+
+- Testing hypotheses three ways:
+    1. one sample test for mean
+    2. two sample test for difference in means
+    3. linear regression coefficient test
+
+- Note the logic and framework is the same as we go through these tests
+
+
+
+
+
+
+
+
+## Set up
+
+Our research question: do female politicians promote different policies than men?
+
+- Why might observation data not allow us to estimate a causal effect?
+
+
+## Set up 
+
+
+- Luckily for us, there was a randomized policy experiment in India since the mid 1990's in which 1/3 of village council heads have been *randomly* reserved for women.
+
+- Why is this important? How does it allow us to estimate a causal effect of women as leaders on policies?
+
+\vspace{2em}
+\scriptsize
+Source: Raghabendra Chattopadhyay and Esther Duflo. (2004). “Women as Policy Makers: Evidence from a Randomized Policy Experiment in India. *Econometrica*, Vol. 72, No. 5, pp. 1409-1443.
+
+
+## Set up
+
+
+West Bengal data:
+
+- `water` measures number of new or repaired drinking water facilities in village since the reserve policy started
+- `irrigation` measures the number of new or repaired irrigation facilities in the village since the reserve policy started
+- `reserved` indicator for whether the Gram Panchayat (level of government of interest) was reserved for women leaders or not
+
+\footnotesize
+```{r}
+link <- "https://raw.githubusercontent.com/kosukeimai/qss/master/PREDICTION/women.csv"
+df <- read.csv(url(link), header = TRUE)
+df[1:3, c("water", "irrigation", "reserved")]
+```
+
+
+## Hypothesis testing
+
+
+Recall the steps for any hypothesis test (from the book, analagous to lecture):
+
+1. State the null and alternative hypothesis.
+2. Choose the appropriate test statistic and significance level $\alpha$.
+3. Determine the sampling distribution of the test statistic *given the null is true*.
+4. Compute the p-value.
+3. Reject the null if p-value $\leq \alpha$, otherwise "retain" (fail to reject) the null.
+
+
+
+## One sample test: Your task
+
+An expert in this field thinks the average number of irrigation facilities across all the villages is 2.  Test the hypothesis the average is greater than 2. 
+
+- Relevant info:
+
+\footnotesize
+```{r}
+samp <- df$irrigation
+mean(samp)
+sd(samp)/sqrt(length(samp))
+```
+
+
+
+
+## One sample test: Answer
+
+Step 1:
+
+$$H_0: \mu = 2$$
+$$H_A: \mu > 2$$
+
+
+## One sample test: Answer
+
+Step 2:
+
+- We will use conventional level of significance of $\alpha = .05$
+
+- We will use a Z-test statistic of the form:
+
+$$Z = \frac{\bar{X} - \mu_0}{std. err. of \bar{X}}$$
+
+- Remember standard error of mean is estimated by $\hat{sd(X)}/\sqrt{n}$
+
+\footnotesize
+```{r}
+n <- length(df$irrigation)
+std_err <- sd(df$irrigation)/sqrt(n)
+z <- (mean(df$irrigation) - 2)/std_err
+z #tip: z test-stat is unlikely to be bigger or smaller than, say, 4!
+```
+
+
+
+## One sample test: Answer
+
+
+Step 3:
+
+- By CLT we know $\bar{X} \sim N(\mu, \sigma/\sqrt{n})$
+- and via "standardizing both sides"...$Z \sim N(0,1)$
+- So given the null is true (given the mean number of irrigation facilities is no different than 4) Z is distributed $N(0,1)$
+
+```{r, echo=FALSE, fig.asp=.5}
+x_axis <- seq(-4,4,.01)
+plot(x_axis, dnorm(x_axis), type = "l", main = "Sampling Distribution of Test Statistic",
+     xlab = "Statistic Value", ylab = "Probability Given Null is True")
+abline(v = z, col = "red")
+text(x = z+.5, y = .05, labels = "z = 2.38")
+```
+
+
+
+## One sample test: Answer
+
+Step 4:
+
+- p-value is probability we'd observe this test statistic *or more extreme*, given the null is true
+
+- Visually, does it seem unlikely we'd observe this result if the null were true?  Maybe... but probably not.  Let's calculate p-value.
+
+```{r, echo=TRUE, fig.asp=.5}
+pnorm(q = z, lower.tail = FALSE)
+```
+
+
+
+
+
+
+## One sample test: Answer
+
+Step 5:
+
+- $0.008 < .05$ so we reject the null (in favor of the alternative)
+
+
+Note: important to know the steps, but R will do it for you
+\footnotesize
+```{r}
+t.test(df$irrigation, mu = 2, alternative = "greater")
+```
+
+
+
+
+
+## Two sample test: Your task
+
+We hypothesize that female politicians support different policies than men.  Test the hypothesis that reserving spots for female leaders influences the number of new/repaired drinking water facilities.
+
+- Relevant info:
+
+\footnotesize
+```{r}
+x_t <- df$water[df$reserved == 1] # outcome for treated units
+x_c <- df$water[df$reserved == 0] # outcome for control units
+mean(x_t)
+mean(x_c)
+std_error <- sqrt(var(x_t)/length(x_t) + var(x_c)/length(x_c))
+std_error
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Two Sample test: Answer
+
+Step 1: 
+
+- $H_0: \mu_T - \mu_C = 0$
+- $H_A:  \mu_T - \mu_C \ne 0$
+
+
+In words:
+
+- Null--having reserved seats for female politicians *does not* influence the number of drinking water facilities in the villages.
+- Alternative--having reserved seats for female politicians *does* influence the number of drinking water facilities in the villages.
+
+
+## Two Sample test: Answer
+
+
+Step 2:
+
+- We will use conventional level of significance of $\alpha = .05$
+
+- We will use a Z-test statistic of the form:
+
+$$Z = \frac{(\bar{X_T } - \bar{X_C}) - 0}{\sqrt{\frac{1}{n_T} \hat{\sigma_T^2} + \frac{1}{n_C}\hat{\sigma_C^2}}}$$
+
+- Remember standard error is different for different test stats
+
+\footnotesize
+```{r}
+z <- (mean(x_t) - mean(x_c))/std_error
+z
+```
+
+
+## Two sample test: Answer
+
+
+Step 3:
+
+- By CLT we know $Z \sim N(0,1)$
+- So given the null is true (given the difference in means is 0) Z is distributed $N(0,1)$
+
+```{r, echo=FALSE, fig.asp=.5}
+x_axis <- seq(-4,4,.01)
+plot(x_axis, dnorm(x_axis), type = "l", main = "Sampling Distribution of Test Statistic",
+     xlab = "Statistic Value", ylab = "Probability Given Null is True")
+abline(v = z, col = "red")
+text(x = z+.5, y = .05, labels = "z = 1.81")
+```
+
+
+
+
+## One sample test: Answer
+
+Step 4:
+
+- Recall, p-value is probability we'd observe this test statistic *or more extreme*, given the null is true
+
+- Visually, does it seem unlikely we'd observe this result if the null were true?  Maybe... maybe not?  Let's calculate p-value.
+
+```{r, echo=TRUE, fig.asp=.5}
+pnorm(q = -abs(z), lower.tail = TRUE)*2
+```
+
+
+
+
+
+
+## One sample test: Answer
+
+Step 5:
+
+- $0.0696 > .05$ so "retain" or fail to reject the null
+
+
+
+
+
+## Regression
+
+Forshadowing next week
+
+- the steps for hypothesis testing for regression coefficients is no different
+- by CLT,
+
+$$ z-\text{ score of }\beta = \frac{\hat{\beta} - \beta}{\text{std. err. of }\hat{\beta}} \sim N(0,1)$$
+
+
+Let's conduct the same hypothesis test using a regression framework.
+
+
+## Regression: Answers
+
+Step 1:
+
+- $H_0: \beta = 0$
+- $H_A: \beta \ne 0$
+
+
+
+## Regression: Answer
+
+
+Step 2: use conventional level of significance of $\alpha = .05$ and z-test statistic stated above
+
+
+\footnotesize
+```{r}
+mod <- lm(water ~ reserved, data = df)
+summary(mod)
+```
+
+
+
+## Regression: Answer
+
+
+Step 3:
+
+- By CLT we know $Z \sim N(0,1)$
+- So given the null is true (given the coefficient is 0) Z is distributed $N(0,1)$
+
+```{r, echo=FALSE, fig.asp=.5}
+x_axis <- seq(-4,4,.01)
+plot(x_axis, dnorm(x_axis), type = "l", main = "Sampling Distribution of Test Statistic",
+     xlab = "Statistic Value", ylab = "Probability Given Null is True")
+abline(v = 2.344, col = "red")
+text(x = 2.344+.5, y = .05, labels = "z = 2.344")
+```
+
+
+
+
+## Regression: Answers
+
+
+Step 4:
+
+- Recall, p-value is probability we'd observe this test statistic *or more extreme*, given the null is true
+
+- Visually, does it seem unlikely we'd observe this result if the null were true?  Probably! Let's calculate p-value.
+
+```{r, echo=TRUE, fig.asp=.5}
+pnorm(q = -abs(2.344), lower.tail = TRUE)*2
+```
+
+
+
+
+
+
+
+
+
+
+
+## Regression: Answer
+
+Step 5:
+
+
+- $0.0197 < \alpha$ at .05 level, so we reject the null
+
+- So our finding that $\beta = 9.252$ was unlikely to be by chance.  The number of drinking facilities increased by about 9 due to the reservation of seats for women.
+
+
+
+
+
+

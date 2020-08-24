@@ -1,0 +1,22 @@
+---
+title: "Plot Test"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+plot(1:10, 1:10)
+```
+
+
+```{r, echo = TRUE, fig.width= 6, fig.height=6}
+plot(1:10, 1:10)
+```
+
+
+
+
